@@ -6,24 +6,27 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->unsignedBigInteger('user_id')->nullable()->change();
+            // Hanya tambahkan kolom user_id jika belum ada
+            if (!Schema::hasColumn('customers', 'user_id')) {
+                $table->unsignedBigInteger('user_id')->nullable()->after('address');
+            }
+            // Tambahkan kunci asing jika belum ada
+            if (Schema::hasColumn('customers', 'user_id') && !$table->hasForeign('customers_user_id_foreign')) {
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            }
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('customers', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
-            $table->dropColumn('user_id');
+            if (Schema::hasColumn('customers', 'user_id')) {
+                $table->dropColumn('user_id');
+            }
         });
     }
 };
